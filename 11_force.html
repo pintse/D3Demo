@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<link rel="stylesheet" href="css/RyanStyle.css">
+
+</head>
+<body>
+<p>人脈網絡，滑鼠移至節點上可顯示名字，亦可拖拉節點</p>
+
+<div id="htmltooltips" class="hidden">
+	<p><span id="valueName">Name</span></p>
+</div>
+
+<script type="text/javascript">
+	
+	var w = 1200, h = 500;
+	var dataset = {
+		nodes:[{name:"Ryan"},  //0
+		       	{ name: "Ken" },  //1
+				{ name: "Sabrina" }, //2
+				{ name: "Yi-Qing" }, //3
+				{ name: "Kenny" }, //4
+				{ name: "Michelle" }, //5
+				{ name: "Bree" }, //6
+				{ name: "Mason" }, //7
+				{ name: "O'Neal" },  //8
+				{ name: "Tiger" },  //9
+				{ name: "Lene" }],  //10
+				
+	    edges:[{source:0, target:1},
+	           	{ source: 0, target: 2 },
+				{ source: 0, target: 3 },
+				{ source: 0, target: 4 },
+				{ source: 0, target: 7 },
+				{ source: 0, target: 8 },
+				{ source: 0, target: 9 },
+				{ source: 1, target: 5 },
+				{ source: 1, target: 8 },
+				{ source: 2, target: 3 },
+				{ source: 2, target: 8 },
+				{ source: 3, target: 7 },
+				{ source: 3, target: 9 },
+				{ source: 4, target: 6 },
+				{ source: 4, target: 7 },
+				{ source: 5, target: 8 },
+				{ source: 6, target: 7 },
+				{ source: 9, target: 10 }]
+	};
+
+	var force = d3.layout.force()
+							.nodes(dataset.nodes)
+							.links(dataset.edges)  //***注意！
+							.size([w,h])  //***注意
+							.linkDistance([100])  //控制線長度，數字越大越長
+							.charge([-900])  //數字越小，聚集程度越小
+							.start()
+							;
+	
+	var color = d3.scale.category10();
+	
+	var svg = d3.select("body").append("svg").attr("width",w).attr("height",h);
+	
+	var nodes = svg.selectAll("circle")
+					.data(dataset.nodes)
+					.enter()
+					.append("circle")
+					.attr("r",15)
+					.style("fill", function(d,i){
+						return color(i);
+					})
+					.call(force.drag)  //達到可以用滑鼠拖拉圓點改變位置
+					.on("mouseover",function(d){
+						//console.log("m:"+d3.mouse(this)[1]);
+						
+						var xPosition = parseFloat(d3.select("svg").property("offsetLeft")) + d3.mouse(this)[0];
+						var yPosition = parseFloat(d3.select("svg").property("offsetTop")) + d3.mouse(this)[1]; //  找出這個svg的y座標，再加上滑鼠在svg裡面的相對y座標
+								
+						d3.select("#htmltooltips")
+							.style("left", xPosition + "px")
+							.style("top", yPosition + "px" )
+							.select("#valueName")
+							.text(d.name);
+							
+						
+						d3.select("#htmltooltips").classed("hidden",false);
+					})
+					.on("mouseout",function(){
+						d3.select("#htmltooltips").classed("hidden",true);
+					});
+
+	
+	var edges = svg.selectAll("line")
+					.data(dataset.edges)
+					.enter()
+					.append("line")
+					.attr("stroke","#ccc")  //最好使用style函數比較貼切
+					.attr("stroke-width",2);
+	
+	force.on("tick", function(){  //一定要有，才會出現force重力效果
+		edges.attr("x1", function(d){ return d.source.x;})
+				.attr("y1", function(d){ return d.source.y;})
+				.attr("x2", function(d){ return d.target.x;})
+				.attr("y2", function(d){ return d.target.y;});
+		
+		nodes.attr("cx", function(d){ return d.x;})
+				.attr("cy", function(d){ return d.y;});
+		
+
+	});
+	
+			
+
+</script>
+</body>
+</html>

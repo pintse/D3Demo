@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css"> 
+	rect{
+		-moz-transition: all 0.3s;
+		-o-transition: all 0.3s;
+		-webkit-transition: all 0.3s;
+		transition: all 0.3s;
+	}
+
+	 rect:hover{
+		fill:orange;
+	} 
+	
+	#htmltooltips{
+		position: absolute;
+		width: 200px;
+		height: auto;
+		padding: 10px;
+		background-color: white;
+		-webkit-border-radius: 10px;
+		-moz-border-radius: 10px;
+		border-radius: 10px;
+		-webkit-box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+		-moz-box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+		box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+		pointer-events: none;
+	}
+	
+	#htmltooltips.hidden{
+		display: none;
+	}
+	
+	#htmltooltips p{
+		margin: 0; 
+		font-family: sans-serif;
+		font-size: 16px;
+		line-height: 20px;  
+	}
+	
+</style>
+</head>
+<body>
+<p>三種Tooltips的方式，呈現與下方三個圖表</p>
+<p>瀏覽器預設Tooltips</p>
+
+<div id="htmltooltips" class="hidden">
+	<p><span id="valueName">Name</span></p>
+	<p><span id="value">100</span>分</p>
+</div>
+
+<script type="text/javascript">
+	var dataset;
+	
+	var w = 1200, h = 300;
+	var xScale, yScale;
+	var svg4browser, svg4svg, svg4html;
+	
+	d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				dataset = data;
+				console.log(data);
+				
+				setupScale();
+				
+				showSvg4browser();
+				
+				d3.select("body")
+					.append("p")
+					.attr("id","byjs")
+					.text("SVG Tooltips");
+				
+				showSvg4svg();
+				
+				d3.select("body")
+					.append("p")
+					.attr("id","byjs")
+					.text("HTML Tooltips");
+			
+				showSvg4html();
+			}
+		});
+	
+	 
+	function setupScale(){
+		xScale = d3.scale.ordinal()  //建立序數尺度，例如：大一、大二或是初級、高級或是李克特量表。但本例dataset並沒有真正的序數型資料，不過可以讓長出來的長條按照dataset裡的順序
+			.domain(d3.range(dataset.length)) //設定序數尺度的輸入領域。例如：.domain(["初級","高級"])。d3.range(一個數值)可以生出0~該數值的資料矩陣。實務上，使用序數尺度不會用這樣的連續數字
+			.rangeRoundBands([0,w],0.05);  //和rangeBand函式功能一樣，差別在於rangeRoundBands的輸出值會取最接近的整數
+
+		yScale = d3.scale.linear()  //y這邊的設定成線性尺度，設定輸入領域最小和最大值，也設定輸出範圍最小和最大值
+			.domain([0,d3.max(dataset,function(d){ return parseInt(d.CIE_grade_abcde); })])   
+			//.domain([0,200]) 
+			.range([0,h])
+	}
+	
+	function generateSVG(classname){
+		return d3.select("body").append("svg").attr("width",w).attr("height",h).attr("class",classname);
+	}
+	
+	function showSvg4browser(){
+		svg4browser = generateSVG("svg4browser");
+		
+		svg4browser.selectAll("rect")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("rect")
+			.attr("x",function(d,i){
+				return xScale(i);
+			})
+			.attr("width",xScale.rangeBand())
+			.attr("y",function(d){
+				return (h- yScale(d.CIE_grade_abcde));
+			})
+			.attr("height", function(d){
+				return yScale(d.CIE_grade_abcde);
+			})
+			.attr("fill",function(d){
+				return "rgb(0,0,"+(d.CIE_grade_abcde)+")"
+			})
+			.append("title")
+			.text(function(d){
+				return "值："+d.CIE_grade_abcde;
+			});
+	}
+	
+	function showSvg4svg(){
+		svg4svg = generateSVG("svg4svg");
+		
+		svg4svg.selectAll("rect")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("rect")
+			.attr("x",function(d,i){
+				return xScale(i);
+			})
+			.attr("width",xScale.rangeBand())
+			.attr("y",function(d){
+				return (h- yScale(d.CIE_grade_abcde));
+			})
+			.attr("height", function(d){
+				return yScale(d.CIE_grade_abcde);
+			})
+			.attr("fill",function(d){
+				return "rgb(0,0,"+(d.CIE_grade_abcde)+")"
+			})
+			.on("mouseover",function(d){
+				var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+				var yPosition = parseFloat(d3.select(this).attr("y")) + 14;
+				
+				svg4svg.append("text")
+					.text(d.CIE_grade_abcde)
+					.attr("id","svgtooltips")
+					.attr("x",xPosition)
+					.attr("y",yPosition)
+					.attr("text-anchor","middle")
+					.attr("font-family","sans-serif")
+					.attr("font-size","11px")
+					.attr("fill","white");
+			})
+			.on("mouseout",function(){
+				d3.select("#svgtooltips").remove();
+			});
+			
+	}
+	
+	function showSvg4html(){
+		svg4html = generateSVG("svg4html");
+		
+		svg4html.selectAll("rect")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("rect")
+			.attr("x",function(d,i){
+				return xScale(i);
+			})
+			.attr("width",xScale.rangeBand())
+			.attr("y",function(d){
+				return (h- yScale(d.CIE_grade_abcde));
+			})
+			.attr("height", function(d){
+				return yScale(d.CIE_grade_abcde);
+			})
+			.attr("fill",function(d){
+				return "rgb(0,0,"+(d.CIE_grade_abcde)+")"
+			})
+			.on("mouseover",function(d){
+				//console.log("m:"+d3.mouse(this)[1]);
+				
+				var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+				//var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h *3;
+				var yPosition = parseFloat(d3.select(".svg4html").property("offsetTop")) + d3.mouse(this)[1]; //  找出這個svg的y座標，再加上滑鼠在svg裡面的相對y座標
+				//console.log(yPosition);
+						
+				d3.select("#htmltooltips")
+					.style("left", xPosition + "px")
+					.style("top", yPosition + "px" )
+					.select("#value")
+					.text(d.CIE_grade_abcde);
+				
+				d3.select("#htmltooltips")
+					.select("#valueName")
+					.text(d.name);
+					
+				
+				d3.select("#htmltooltips").classed("hidden",false);
+			})
+			.on("mouseout",function(){
+				d3.select("#htmltooltips").classed("hidden",true);
+			});
+			
+	}
+	
+	var key = function(d){  //***重點
+		return d.userId;
+	}
+
+
+</script>
+
+</body>
+</html>

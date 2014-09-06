@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css"> 
+
+</style>
+</head>
+<body>
+<p>圓餅圖。因為使用顏色類別太少，有些數值重複顏色</p>
+
+<script type="text/javascript">
+	var dataset;
+	
+	var w = 600, h = 600;
+	var svg4pie;
+	
+	var pie = d3.layout.pie()
+				.value(function (d) {return d.CIE_grade_abcde }); //***重點。設定要用來顯示的數值資料欄位
+		
+	d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				dataset = data;
+				console.log(data);
+				
+				showSvg4pie(0);
+				
+				showSvg4pie(w/3);
+				
+			}
+		});
+
+	
+	function generateSVG(classname){
+		return d3.select("body").append("svg").attr("width",w).attr("height",h).attr("class",classname);
+	}
+	
+	function showSvg4pie(innerRadius){  //***重點。
+		
+		var outerRadius = w / 2;
+		var arc = d3.svg.arc()
+					.innerRadius(innerRadius)
+					.outerRadius(outerRadius);
+		
+		
+		svg4pie = generateSVG("svg4pie");
+		
+		var arcs = svg4pie.selectAll("g.arc")
+					.data(pie(dataset))
+					.enter()
+					.append("g")
+					.attr("class","arc")
+					.attr("transform","translate("+outerRadius+","+outerRadius+")");
+					
+				arcs.append("path")
+					.attr("fill",function(d,i){
+						return color(d.value);  //***重點。讓相同數值相同顏色，但因為數值的多樣性超過使用預設函式設定的20種數量，所以顏色會重複使用
+					})
+					.attr("d",arc);
+					
+				arcs.append("text")  //***重點。如果這個append直接接著上面寫，不是另外由arcs去append，text秀不出來，因為text隸屬到path裡面了
+					.attr("transform",function(d){
+						return "translate("+arc.centroid(d)+")";
+					})
+					.attr("text-anchor","middle")
+					.text(function(d){
+						return d.value;
+						//return d.data.name+":"+d.value;  //***重點。顯示出名稱與數值
+					}) /**/
+					;
+		
+		
+		/* 呈現的結果，數值會由大到小以順時針方向排序 */
+	}
+	
+	var color = d3.scale.category20();  //***重點。取得d3預設的20種分類顏色
+	
+
+</script>
+</body>
+</html>

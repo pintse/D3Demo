@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+
+</head>
+<body>
+<p id="adddate">請按這列文字新增一筆資料長條</p>
+<p id="removedate">請按這列文字刪除一筆資料長條</p>
+
+<script type="text/javascript">
+	var dataset;
+	
+	var w = 1200, h = 300;
+	var xScale, yScale;
+	var svg;
+	
+	d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				dataset = data;
+				console.log(data);
+				
+				showChart();
+			}
+		});
+	
+	function showChart(){
+		xScale = d3.scale.ordinal()  //建立序數尺度，例如：大一、大二或是初級、高級或是李克特量表。但本例dataset並沒有真正的序數型資料，不過可以讓長出來的長條按照dataset裡的順序
+				.domain(d3.range(dataset.length)) //設定序數尺度的輸入領域。例如：.domain(["初級","高級"])。d3.range(一個數值)可以生出0~該數值的資料矩陣。實務上，使用序數尺度不會用這樣的連續數字
+				.rangeRoundBands([0,w],0.05);  //和rangeBand函式功能一樣，差別在於rangeRoundBands的輸出值會取最接近的整數
+		
+		yScale = d3.scale.linear()  //y這邊的設定成線性尺度，設定輸入領域最小和最大值，也設定輸出範圍最小和最大值
+				.domain([0,d3.max(dataset,function(d){ return parseInt(d.CIE_grade_abcde); })])   //@@@很奇怪這裡回傳99，但實際最大數值為193，why??? 測試發現，他會取第一位數字最大的也就是9開頭裡面最大的，也就是d3把他當字串來比，所以要作parseInt把他轉成數字
+				//.domain([0,200]) 
+				.range([0,h])
+				
+		svg = d3.select("body")
+			.append("svg")
+			.attr("width",w)
+			.attr("height",h);
+		
+		svg.selectAll("rect")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("rect")
+			.attr("x",function(d,i){
+				return xScale(i);
+			})
+			.attr("width",xScale.rangeBand())
+			.attr("y",function(d){
+				return (h- yScale(d.CIE_grade_abcde));
+			})
+			.attr("height", function(d){
+				return yScale(d.CIE_grade_abcde);
+			})
+			.attr("fill",function(d){
+				return "rgb(0,0,"+(d.CIE_grade_abcde)+")"
+			});
+		
+		svg.selectAll("text")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("text")
+			.text(function(d){return d.CIE_grade_abcde;})
+			.attr("text-anchor","middle")
+			.attr("x",function(d,i){
+				return xScale(i)+xScale.rangeBand()/2;
+			})
+			.attr("y",function(d){
+				return (h - yScale(d.CIE_grade_abcde)) + 14;
+			})
+			.attr("font-family","sans-serif")
+			.attr("font-size","11px")
+			.attr("fill","white");
+	}
+	
+	var key = function(d){  //***重點
+		return d.userId;
+	}
+	
+	//匯入新資料，長出新圖
+	d3.selectAll("p")
+		.on("click",function(){
+			
+			if (d3.select(this).attr("id") == "adddate"){
+				var maxValue = 200;
+				var newNumber = Math.ceil(Math.random()*maxValue);
+				var latKeyValue = dataset[dataset.length - 1].userId;
+				dataset.push({
+					userId: latKeyValue+1,
+					CIE_grade_abcde: newNumber
+				});
+			}else{
+				dataset.shift(); //移除陣列中的第一個元素
+					
+			}
+			
+			
+			xScale.domain( d3.range(dataset.length));
+			
+			yScale.domain([0,d3.max(dataset,function(d){ return parseInt(d.CIE_grade_abcde); })]);
+			//yScale.domain([0,200]);
+			
+			
+			var bar = svg.selectAll("rect")
+				.data(dataset,key);
+			
+			bar.enter()  //***重點，把新資料的矩形畫出來
+				.append("rect")
+				.attr("x",w)  //加在右邊界線外，在用轉場效果把資料往左移，秀出新資料
+				.attr("y", function(d){
+					return (h - yScale(d.CIE_grade_abcde));
+				})
+				.attr("width",xScale.rangeBand())
+				.attr("height",function(d){
+					return yScale(d.CIE_grade_abcde);
+				});
+			
+			bar.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				.duration(1000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				.attr("x",function(d,i){
+					return xScale(i);
+				})
+				.attr("y",function(d){
+					return h - yScale(d.CIE_grade_abcde);
+				})
+				.attr("width",xScale.rangeBand())
+				.attr("height",function(d){
+					return yScale(d.CIE_grade_abcde);
+				})
+				.attr("fill",function(d){
+					return "rgb(0,0,"+ (d.CIE_grade_abcde) +")";
+				});
+				
+			
+			bar.exit()  //***重點，刪除資料後，移除資料圖形，生成新圖形
+				.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				.duration(1000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				.attr("x",-xScale.rangeBand())  //***重點。負數。這讓移除的方式從左邊的圖形bar來進行移除
+				.remove();  //***重點，把元素徹底移除
+			
+			
+				
+			var datatext = svg.selectAll("text")
+				.data(dataset,key);  //***重點。
+			
+			datatext.enter()
+				.append("text")
+				.text(function(d){return d.CIE_grade_abcde;})
+				.attr("text-anchor","middle")
+				.attr("x",function(d,i){
+					return w+xScale.rangeBand()/2;
+				})
+				.attr("y",function(d){
+					return (h - yScale(d.CIE_grade_abcde)) + 14;
+				})
+				.attr("font-family","sans-serif")
+				.attr("font-size","11px")
+				.attr("fill","white");
+	
+			datatext.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				.duration(1000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				.text(function(d){return d.CIE_grade_abcde;})
+				.attr("x",function(d,i){
+					return xScale(i)+xScale.rangeBand()/2;
+				})
+				.attr("y",function(d){
+					return (h - yScale(d.CIE_grade_abcde)) + 14;
+				});	
+				
+			
+			datatext.exit()
+				.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				.duration(1000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				.attr("x",-xScale.rangeBand())  //***重點。負數。這讓移除的方式往左邊
+				.remove();  //***重點，把元素徹底移除
+		});
+		
+</script>
+
+</body>
+</html>

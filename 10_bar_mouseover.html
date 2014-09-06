@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css"> /***重點*/
+	.svg4css{
+		-moz-transition: all 0.3s;
+		-o-transition: all 0.3s;
+		-webkit-transition: all 0.3s;
+		transition: all 0.3s;
+	}
+
+	 .svg4css:hover{
+		fill:orange;
+	}
+	svg text{
+		pointer-events: none;  /* bar上面的文字不觸發滑鼠event，如此，本例滑過bar上面的文字，bar也會觸發event */
+	}
+	
+</style>
+</head>
+<body>
+<p id="bycss">CSS效果</p>
+
+<script type="text/javascript">
+	var dataset;
+	
+	var w = 1200, h = 300;
+	var xScale, yScale;
+	var svg4css, svg4js;
+	
+	d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				dataset = data;
+				console.log(data);
+				
+				showChart(svg4css, "svg4css");
+				
+				d3.select("body")
+					.append("p")
+					.attr("id","byjs")
+					.text("JavaScript & D3效果");
+				
+				showChart(svg4js,"svg4js");
+				
+				modifysvg4js();
+			}
+		});
+	
+	function modifysvg4js(){ /***重點*/
+		d3.selectAll("svg").selectAll(".svg4js")
+			.on("mouseover",function(){
+				d3.select(this)
+				.attr("fill","orange");
+			})
+			.on("mouseout",function(d){
+				d3.select(this)
+				.transition()
+				.duration(250)
+				.attr("fill","rgb(0,0,"+d.CIE_grade_abcde+")");
+			});
+	}
+	 
+	
+	function showChart(thissvg,rid){
+		xScale = d3.scale.ordinal()  //建立序數尺度，例如：大一、大二或是初級、高級或是李克特量表。但本例dataset並沒有真正的序數型資料，不過可以讓長出來的長條按照dataset裡的順序
+				.domain(d3.range(dataset.length)) //設定序數尺度的輸入領域。例如：.domain(["初級","高級"])。d3.range(一個數值)可以生出0~該數值的資料矩陣。實務上，使用序數尺度不會用這樣的連續數字
+				.rangeRoundBands([0,w],0.05);  //和rangeBand函式功能一樣，差別在於rangeRoundBands的輸出值會取最接近的整數
+		
+		yScale = d3.scale.linear()  //y這邊的設定成線性尺度，設定輸入領域最小和最大值，也設定輸出範圍最小和最大值
+				.domain([0,d3.max(dataset,function(d){ return parseInt(d.CIE_grade_abcde); })])   
+				//.domain([0,200]) 
+				.range([0,h])
+				
+		thissvg = d3.select("body")
+			.append("svg")
+			.attr("width",w)
+			.attr("height",h);
+		
+		thissvg.selectAll("rect")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("rect")
+			.attr("class",rid)
+			.attr("x",function(d,i){
+				return xScale(i);
+			})
+			.attr("width",xScale.rangeBand())
+			.attr("y",function(d){
+				return (h- yScale(d.CIE_grade_abcde));
+			})
+			.attr("height", function(d){
+				return yScale(d.CIE_grade_abcde);
+			})
+			.attr("fill",function(d){
+				return "rgb(0,0,"+(d.CIE_grade_abcde)+")"
+			});
+		
+		thissvg.selectAll("text")
+			.data(dataset,key)  //***重點。
+			.enter()
+			.append("text")
+			.text(function(d){return d.CIE_grade_abcde;})
+			//.style("pointer-events","none")   /***重點。和上面css設定的效果一樣*/
+			.attr("text-anchor","middle")
+			.attr("x",function(d,i){
+				return xScale(i)+xScale.rangeBand()/2;
+			})
+			.attr("y",function(d){
+				return (h - yScale(d.CIE_grade_abcde)) + 14;
+			})
+			.attr("font-family","sans-serif")
+			.attr("font-size","11px")
+			.attr("fill","white");
+	}
+	
+	var key = function(d){  //***重點
+		return d.userId;
+	}
+
+
+</script>
+
+
+</body>
+</html>

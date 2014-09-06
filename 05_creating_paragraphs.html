@@ -1,0 +1,43 @@
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>讀入資料檔案</title>
+	<script type="text/javascript" src="js/d3.js"> </script>
+
+
+</head>
+<body>
+<p>讀入CSV資料，依照邏輯顯示成不同顏色</p>
+	<script type="text/javascript">
+		
+		var dataset;
+		
+		d3.csv("data/experimental.csv",function(error,data){
+				if(error){
+					console.log(error);
+				}else{
+					dataset = data;
+					console.log(data);
+					
+					createElement();
+				}
+			});
+		
+		
+		function createElement(){
+			d3.select("body").selectAll("p").data(dataset).enter().append("p")
+			.text(function(d){return d.CIE_grade_abcde;})
+			.style("color",function(d){
+				if(d.CIE_grade_abcde < 100){
+					return "red";
+				}else{
+					return "blue";
+				}
+			});
+		}
+		
+			
+	</script>
+
+</body>
+</html>

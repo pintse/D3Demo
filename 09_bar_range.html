@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+
+</head>
+<body>
+<p>請按這列文字進行資料更新</p>
+<script type="text/javascript">
+	var dataset = [5,10,13,19,21,25,22,18,15,13,
+	               11,12,15,20,18,17,16,18,23,25];
+	
+	var w = 600, h = 250;
+	var xScale = d3.scale.ordinal()  //建立序數尺度，例如：大一、大二或是初級、高級或是李克特量表。但本例dataset並沒有真正的序數型資料，不過可以讓長出來的長條按照dataset裡的順序
+					.domain(d3.range(dataset.length)) //設定序數尺度的輸入領域。例如：.domain(["初級","高級"])。d3.range(一個數值)可以生出0~該數值的資料矩陣。實務上，使用序數尺度不會用這樣的連續數字
+					.rangeRoundBands([0,w],0.05);  //和rangeBand函式功能一樣，差別在於rangeRoundBands的輸出值會取最接近的整數
+	
+	var yScale = d3.scale.linear()  //y這邊的設定成線性尺度，設定輸入領域最小和最大值，也設定輸出範圍最小和最大值
+					.domain([0,d3.max(dataset)])  
+					.range([0,h])
+					
+					
+	/*
+		序數尺度使用的是離散範圍，也就是他的輸出值是事前定義好的，可以是數值也可以不是。
+		.rangeBand([0,w],0.2)用此函式輸入最低0與最高值w，會自動將資料切割為均勻區塊或頻段，並且每個區塊的寬度的20%（此函式第二個參數）會用來作為間距。
+	
+	*/
+	
+	var svg = d3.select("body")
+				.append("svg")
+				.attr("width",w)
+				.attr("height",h);
+	
+	svg.selectAll("rect")
+		.data(dataset)
+		.enter()
+		.append("rect")
+		.attr("x",function(d,i){
+			return xScale(i);
+		})
+		.attr("width",xScale.rangeBand())
+		.attr("y",function(d){
+			return (h- yScale(d));
+		})
+		.attr("height", function(d){
+			return yScale(d);
+		})
+		.attr("fill",function(d){
+			return "rgb(0,0,"+(d*10)+")"
+		});
+		
+	svg.selectAll("text")
+		.data(dataset)
+		.enter()
+		.append("text")
+		.text(function(d){return d;})
+		.attr("text-anchor","middle")
+		.attr("x",function(d,i){
+			return xScale(i)+xScale.rangeBand()/2;
+		})
+		.attr("y",function(d){
+			return (h - yScale(d)) + 14;
+		})
+		.attr("font-family","sans-serif")
+		.attr("font-size","11px")
+		.attr("fill","white");
+	
+	//匯入新資料，長出新圖
+	d3.select("p")
+		.on("click",function(){
+			
+			var maxValue = 100;
+			var datalength = dataset.length;
+			dataset = [];
+			for(var i = 0 ; i < datalength ;i++){
+				var number1 = Math.ceil(Math.random()*maxValue);  //新數值1到25
+				dataset.push(number1);
+			}
+			
+			yScale.domain([0,d3.max(dataset)]);
+			
+			svg.selectAll("rect")
+				.data(dataset)  //不需要在做enter()和append()
+				.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				//.delay(500)  //延遲作轉場效果
+				/*.delay(function(d,i){
+					return i /dataset.length *1000;  //動態設定延遲時間，
+				})*/
+				.duration(5000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				//.ease("linear")  //預設轉場速度會是「慢快慢」，使用ease("linear") 會讓速度一致，不會有加減速
+				.attr("y",function(d){
+					return h - yScale(d);
+				})
+				.attr("height",function(d){
+					return yScale(d);
+				})
+				.attr("fill",function(d){
+					return "rgb(0,0,"+(d*10)+")"
+				});
+			
+			
+				
+			svg.selectAll("text")
+				.data(dataset)
+				.transition()  //transition函式是轉場效果，非必要函式，但增加美觀。必須要放在選擇器建立之後和任何特性(attr)發生之前
+				.duration(5000)  //轉場效果預設是250毫秒，可以用duration指定轉場效果執行的毫秒時間
+				.text(function(d){return d;})
+				.attr("x",function(d,i){
+					return xScale(i)+xScale.rangeBand()/2;
+				})
+				.attr("y",function(d){
+					return (h - yScale(d)) + 14;
+				});
+		});
+		
+</script>
+
+
+</body>
+</html>

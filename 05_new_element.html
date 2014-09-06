@@ -1,0 +1,58 @@
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>D3 Page Example</title>
+	<script type="text/javascript" src="js/d3.js"> </script>
+
+
+</head>
+<body>
+<p>使用D3在網頁上增加元素（下方的「New paragraph」文字。原始碼中示範不同檔案格式的讀檔方式與讀檔的錯誤控制</p>
+	<script type="text/javascript">
+		
+		var dataset;
+		
+		d3.select("body").append("p").text("New paragraph");
+		
+		//必須確定檔案資料載入完成之後，才可以進行後續的動作（例如：SVG的繪製）。讀檔的動作是獨立另外執行的，所以並不會讀完檔案才執行讀檔程式後面的程式碼，必須程式設計師自己控制，如以下程式的控制。
+		d3.csv("data/experimental.csv",function(error,data){
+				if(error){
+					console.log(error);
+				}else{
+					dataset = data;
+					console.log(data);
+					
+					//othermethod(); 這個method裡面可以使用dataset的變數資料
+				}
+			});
+	
+		
+		d3.tsv("tab分隔資料欄位的檔案",function(error,data){
+				if(error){
+					console.log(error);
+				}else{
+					dataset = data;
+					console.log(data);
+					
+					//othermethod(); 這個method裡面可以使用dataset的變數資料
+				}
+			}); 
+		
+		d3.json("json格式資料檔案路徑", function(error,json){
+			if(error){
+				console.log(error);
+			}else{
+				console.log(json);
+				//othermethod(); 這個method裡面可以使用dataset的變數資料
+			}
+			
+		});	
+			
+		function othermethod(){
+			return;
+		}
+		
+	</script>
+
+</body>
+</html>

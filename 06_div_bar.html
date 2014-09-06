@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css">
+	div.bar{
+		display: inline-block;
+		width: 20px;
+		height: 75px;  /* 會被後面程式蓋掉 */
+		background-color: teal;
+		margin-right: 2px;
+	}
+</style>
+</head>
+<body>
+<p>使用DIV畫柱狀圖，使用SVG畫圓。大小對應資料數值</p>
+
+	<script type="text/javascript">
+		var dataset = [];
+		
+		var dataarray = [5,10,15,20,25];
+		/*
+		d3.select("body").selectAll("div")
+			.data(dataarray)
+			.enter()
+			.append("div")
+			.attr("class","bar")
+			.style("height",function(d){
+				return d+"px";
+			}); */
+		
+		d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				for(g=0;g<79;g++){
+					dataset.push(data[g]);	
+				}
+				
+				console.log(data);
+				showDataDivBar();
+				showDataSvg();
+				//showDataArraySvg();
+				
+			}
+		});
+		
+		function showDataDivBar(){
+			d3.select("body").selectAll("div")
+				.data(dataset)
+				.enter()
+				.append("div")
+				.attr("class","bar")
+				.style("height",function(d){
+					return d.CIE_grade_abcde+"px";
+				});
+		}
+		
+		
+		function showDataSvg(){
+			
+			var x =0,y=0,k=0;
+			
+			
+			var svg = d3.select("body").append("svg")
+				.attr("width",1000)
+				.attr("height",400);
+			
+			var circles = svg.selectAll("circle")
+				.data(dataset)
+				.enter()
+				.append("circle")
+				
+			circles.attr("cx",function(d,i){
+				
+				x = ((k+1)*(200/10*2))
+				
+				if (x > 800){  //一列排到800px就換下一列排
+					k = 0;
+					x = ((k+1)*(200/10*2));
+				}
+				k++;
+				
+				//console.log("x:"+x);
+				return x;
+			})
+				.attr("cy",function(d){
+					var cx = d3.select(this).attr("cx");
+					console.log("cx:"+cx);
+					if ( cx == 40){
+						y = y+(200/10*2);
+						
+						console.log("y1:"+y);
+					}else{
+						//y = 200/10;
+						//console.log("y2:"+y);
+					}
+					
+					return y;
+				})
+				.attr("r",function(d){
+					return d.CIE_grade_abcde / 10;
+				})
+				.attr("fill","yellow")
+				.attr("stroke","orange")
+				.attr("stroke-width",function(d){
+					return d.CIE_grade_abcde / 10/2;
+				});
+			
+		}
+		
+		
+		function showDataArraySvg(){
+			var svg = d3.select("body").append("svg");
+			var circles = svg.selectAll("circle")
+				.data(dataarray)
+				.enter()
+				.append("circle")
+				
+			circles.attr("cx",function(d,i){
+				return (i*50)+25;
+			})
+				.attr("cy",50/2)
+				.attr("r",function(d){
+					return d;
+				})
+				.attr("fill","yellow")
+				.attr("stroke","orange")
+				.attr("stroke-width",function(d){
+					return d/2;
+				});
+			
+		}
+		
+	</script>
+	
+	
+	
+	
+</body>
+</html>

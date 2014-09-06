@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css">
+	div.bar{
+		display: inline-block;
+		width: 20px;
+		height: 75px;  /* 會被後面程式蓋掉 */
+		background-color: teal;
+		margin-right: 2px;
+	}
+</style>
+</head>
+<body>
+<p>使用DIV畫柱狀圖。下面是使用SVG畫柱狀圖</p>
+
+	<script type="text/javascript">
+		var dataset = [];
+		
+		//var dataarray = [5,10,15,20,25];
+		/*
+		d3.select("body").selectAll("div")
+			.data(dataarray)
+			.enter()
+			.append("div")
+			.attr("class","bar")
+			.style("height",function(d){
+				return d+"px";
+			}); */
+		
+		d3.csv("data/experimental.csv",function(error,data){
+			if(error){
+				console.log(error);
+			}else{
+				for(g=0;g<79;g++){
+					dataset.push(data[g]);	
+				}
+				
+				console.log(data);
+				showDataDivBar();
+				
+				d3.select("body")
+				.append("p")
+				.text("下面使用SVG畫柱狀圖，資料除了反應在長度外，顏色深淺也反應資料數值，顏色越淺數值越大，並在bar上顯示資料數值");
+				
+				showDataSvgBar();
+			}
+		});
+		
+		function showDataDivBar(){
+			d3.select("body").selectAll("div")
+			.data(dataset)
+			.enter()
+			.append("div")
+			.attr("class","bar")
+			.style("height",function(d){
+				var barHeight = d.CIE_grade_abcde;
+				return barHeight+"px";
+			})
+		}
+			
+		function showDataSvgBar(){
+			var w = 1250, h=200, barPadding = 1;
+			
+			var br = d3.select("body")
+						.append("br");
+			
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width",w)
+						.attr("height",h);
+			
+			svg.selectAll("rect")
+				.data(dataset)
+				.enter()
+				.append("rect")
+				.attr("x",function(d,i){
+					return i* (w/dataset.length) ;
+				})
+				.attr("y",function(d){ //因為svg的座標(0,0)在左上角，所以若不調整y，而直接指定為0，則資料bar會呈現往下長
+					return h - d.CIE_grade_abcde;
+				})
+				.attr("width",w/dataset.length - barPadding)
+				.attr("height",function(d){
+					return d.CIE_grade_abcde;
+				})
+				.attr("fill",function(d){
+					return "rgb(0,"+d.CIE_grade_abcde+","+d.CIE_grade_abcde+")";
+				});
+			
+			svg.selectAll("text")
+				.data(dataset)
+				.enter()
+				.append("text")
+				.text(function(d){
+					return d.CIE_grade_abcde;
+				})
+				.attr({
+					x:function(d,i){ return i * (w / dataset.length )+(w / dataset.length - barPadding)/2; }, // 搭配文字置中
+					y:function(d){ return h - d.CIE_grade_abcde + 15; },
+					//font-family: "sans-serif",  //font-family和font-size和text-anchor會錯誤
+					//font-size: "11px",
+					
+					fill: "white"
+					
+				})
+				.attr("font-family","sans-serif")
+				.attr("font-size", "9px")
+				.attr("text-anchor", "middle") //搭配文字置中
+				;
+				
+		}
+	</script>
+
+</body>
+</html>

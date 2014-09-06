@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css">
+	.axis path,
+	.axis line{
+		fill: none;
+		stroke: black;
+		shape-rendering: crispEdges;
+	}
+	
+	.axis text{
+		font-family: sans-serif;
+		font-size: 11px;
+	}
+
+</style>
+
+</head>
+<body>
+<p>每次本網頁重載即會亂數產生原點，X與Y軸會依照數值自動調整刻度</p>
+	<script type="text/javascript">
+		var dataset = [];
+		var numDataPoints = 50;
+		var xRange = Math.random()*1000;
+		var yRange = Math.random()*1000;
+		for(var i =0; i< numDataPoints;i++){
+			var number1 = Math.floor(Math.random()*xRange);
+			var number2 = Math.floor(Math.random()*yRange);
+			dataset.push([number1,number2]);
+		}
+		
+		var w=500, h=300, padding=30;
+		
+		var xScale = d3.scale.linear()
+						.domain([0, d3.max(dataset, function(d){return d[0];})])  //domain的參數是矩陣
+						.range([padding,w-padding*2]);  //range的參數是矩陣
+		var yScale = d3.scale.linear()
+						.domain([0, d3.max(dataset, function(d){return d[1];})])
+						.range([h-padding, padding]);  //讓y值數值高的在上面
+		var rScale = d3.scale.linear()
+						.domain([0, d3.max(dataset, function(d){return d[1];})])
+						.range([2,5]) ;	
+						
+		var svg = d3.select("body")
+					.append("svg")
+					.attr("width",w)
+					.attr("height",h);
+		
+		svg.selectAll("circle")
+			.data(dataset)
+			.enter()
+			.append("circle")
+			.attr({
+				cx: function(d){return xScale(d[0]); },
+				cy: function(d){return yScale(d[1]); },
+				r: function(d){
+					return rScale(d[1]);  //書上說：使用面積大小來對應呈現資料量的大小要比使用半徑來得正確與合理，所以必須先從面積反推出半徑。h-d[1]即為面積資料
+				}
+			});
+	
+		/*
+		svg.selectAll("text")
+			.data(dataset)
+			.enter()
+			.append("text")
+			.text(function(d){
+				return d[0]+","+d[1];
+			})
+			.attr("x",function(d){return xScale(d[0]);})
+			.attr("y",function(d){return yScale(d[1]);})
+			.attr("font-family","sans-serif")
+			.attr("font-size","11px")
+			.attr("fill","red");
+		*/
+		
+		
+		var xAxis = d3.svg.axis()
+						.scale(xScale)
+						.orient("buttom")
+						.ticks(5);  //d3會自動生出他認為理想的刻度，也可以用這個指定，但是d3還是會依照你指定的數值在給一個他認為理想的刻度
+		
+		//var formatAsPercentage = d3.format(".1%"); //可設定刻度的格式，以這裡的例子是設定為轉成百分比顯示
+		//xAxis.tickFormat(formatAsPercentage);
+		
+		var yAxis = d3.svg.axis()
+						.scale(yScale)
+						.orient("left")
+						.ticks(5);
+						
+		svg.append("g")  //svg裡面的群組group元素
+			.call(xAxis)  
+			.attr("class", "axis")
+			.attr("transform","translate(0,"+(h-padding)+")");  //把y軸移到下方並與底部邊界有一些距離
+			
+		svg.append("g")
+			.attr("class","axis")
+			.attr("transform","translate("+padding+",0)")
+			.call(yAxis);
+	</script>
+</body>
+</html>

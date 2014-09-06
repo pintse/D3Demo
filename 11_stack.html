@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css"> 
+
+</style>
+</head>
+<body>
+<p>堆疊圖。分數由五個部分所總和</p>
+
+<script type="text/javascript">
+	var dataset=[];
+	
+	var w = 1200, h = 300;
+	var xScale, yScale;
+	var svg;
+	
+	var stack = d3.layout.stack();
+				//.value(function (d) {return d.CIE_grade_abcde }); //***重點。設定要用來顯示的數值資料欄位
+		
+	d3.csv("data/experimental.csv",function(error,data){
+			var subdata=[];
+			
+			if(error){
+				console.log(error);
+			}else{
+				data.forEach(function(d,i){
+					subdata.push( {x:i,y:parseInt(d.CIE_part_a)});
+				});
+				dataset.push(subdata);
+				subdata=[];
+				
+				data.forEach(function(d,i){
+					subdata.push( {x:i,y:parseInt(d.CIE_part_b)});
+				});
+				dataset.push(subdata);
+				subdata=[];
+				
+				data.forEach(function(d,i){
+					subdata.push( {x:i,y:parseInt(d.part_c)});
+				});
+				dataset.push(subdata);
+				subdata=[];
+				
+				data.forEach(function(d,i){
+					subdata.push( {x:i,y:parseInt(d.part_d)});
+				});
+				dataset.push(subdata);
+				subdata=[];
+				
+				data.forEach(function(d,i){
+					subdata.push( {x:i,y:parseInt(d.part_e)});
+				});
+				dataset.push(subdata);
+				subdata=[];
+				
+				stack(dataset);  //經過stack堆疊之後，dataset裡每個物件會多一個y0的屬性，y0的數值為累加第一維前一筆物件的y值
+				
+				//console.log(data);
+				
+				showChart();
+				
+				//showSvg4pie(w/3);
+				
+			}
+		});
+
+
+	function generateSVG(classname){
+		return d3.select("body").append("svg").attr("width",w).attr("height",h).attr("class",classname);
+	}
+	
+	 
+	function setupScale(){
+		xScale = d3.scale.ordinal()  //建立序數尺度，例如：大一、大二或是初級、高級或是李克特量表。但本例dataset並沒有真正的序數型資料，不過可以讓長出來的長條按照dataset裡的順序
+			.domain(d3.range(dataset[0].length)) //設定序數尺度的輸入領域。例如：.domain(["初級","高級"])。d3.range(一個數值)可以生出0~該數值的資料矩陣。實務上，使用序數尺度不會用這樣的連續數字
+			.rangeRoundBands([0,w],0.05);  //和rangeBand函式功能一樣，差別在於rangeRoundBands的輸出值會取最接近的整數
+
+		yScale = d3.scale.linear()  //y這邊的設定成線性尺度，設定輸入領域最小和最大值，也設定輸出範圍最小和最大值
+			.domain([0,d3.max(dataset,function(d){ 
+										return d3.max(d, function(d) { //****重點。dataset是二維陣列
+													return d.y0 + d.y;
+												}) 
+				})])   
+			.range([0,h]);
+	}
+	
+	
+	function showChart(){  //***重點。
+		
+		svg = generateSVG("svg4stack");
+	
+		setupScale();
+		
+		var groups = svg.selectAll("g")
+						.data(dataset)
+						.enter()
+						.append("g")
+						.style("fill", function(d,i){
+							return color(i);
+						});
+					
+		var rects = groups.selectAll("rect")
+					.data(function(d){return d;})
+					.enter()
+					.append("rect")
+					.attr("x", function(d,i){
+						return xScale(i);
+					})
+					.attr("y", function(d){
+						return h - yScale(d.y0) - yScale(d.y);  //**重點
+					})
+					.attr("height",function(d){ return yScale(d.y);})
+					.attr("width", xScale.rangeBand());
+	}
+	
+	var color = d3.scale.category20();
+
+
+
+</script>
+
+</body>
+</html>

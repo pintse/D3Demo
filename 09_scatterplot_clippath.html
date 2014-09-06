@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="js/d3.js" ></script>
+<style type="text/css">
+	.axis path,
+	.axis line{
+		fill: none;
+		stroke: black;
+		shape-rendering: crispEdges;
+	}
+	
+	.axis text{
+		font-family: sans-serif;
+		font-size: 11px;
+	}
+
+</style>
+
+</head>
+<body>
+<p>遮罩效果，將超過四方軸線的圓點面積去除。請按這列文字進行資料更新</p>
+	<script type="text/javascript">
+	
+		var w=500, h=300, padding=30;
+		var dataset = [];
+		var xScale, yScale, rScale;
+		var xAxis, yAxis;
+		function prepareData(){
+			
+			dataset = [];
+			var numDataPoints = 50;
+			var xRange = Math.random()*1000;
+			var yRange = Math.random()*1000;
+			for(var i =0; i< numDataPoints;i++){
+				var number1 = Math.floor(Math.random()*xRange);
+				var number2 = Math.floor(Math.random()*yRange);
+				dataset.push([number1,number2]);
+			}
+			
+			xScale = d3.scale.linear()
+				.domain([0, d3.max(dataset, function(d){return d[0];})])  //domain的參數是矩陣
+				.range([padding,w-padding*2]);  //range的參數是矩陣
+			yScale = d3.scale.linear()
+				.domain([0, d3.max(dataset, function(d){return d[1];})])
+				.range([h-padding, padding]);  //讓y值數值高的在上面
+			rScale = d3.scale.linear()
+				.domain([0, d3.max(dataset, function(d){return d[1];})])
+				.range([2,5]) ;	
+			
+			xAxis = d3.svg.axis()
+				.scale(xScale)
+				.orient("buttom")
+				.ticks(5);  //d3會自動生出他認為理想的刻度，也可以用這個指定，但是d3還是會依照你指定的數值在給一個他認為理想的刻度
+
+//var formatAsPercentage = d3.format(".1%"); //可設定刻度的格式，以這裡的例子是設定為轉成百分比顯示
+//xAxis.tickFormat(formatAsPercentage);
+
+			yAxis = d3.svg.axis()
+				.scale(yScale)
+				.orient("left")
+				.ticks(5);
+		}
+		
+		prepareData();
+						
+		var svg = d3.select("body")
+					.append("svg")
+					.attr("width",w)
+					.attr("height",h);
+		
+		svg.append("clipPath")  //建立一個遮罩區，資料圖形僅在這裡區域裡面才會顯現
+			.attr("id","chart-area")
+			.append("rect")
+			.attr("x",padding)
+			.attr("y",padding)
+			.attr("width",w - padding * 3)
+			.attr("height",h - padding * 2)
+	
+		svg.append("g")  //創建一個群組，把所有的圓點都建立在這個群組裡面。
+			.attr("id","circles")
+			.attr("clip-path", "url(#chart-area)")
+			.selectAll("circle")
+			.data(dataset)
+			.enter()
+			.append("circle")
+			.attr({
+				cx: function(d){return xScale(d[0]); },
+				cy: function(d){return yScale(d[1]); },
+				r: function(d){
+					return rScale(d[1]);  //書上說：使用面積大小來對應呈現資料量的大小要比使用半徑來得正確與合理，所以必須先從面積反推出半徑。h-d[1]即為面積資料
+				}
+			});
+		
+		
+						
+		svg.append("g")  //svg裡面的群組group元素
+			.call(xAxis)  
+			.attr("class", "x axis")
+			.attr("transform","translate(0,"+(h-padding)+")");  //把y軸移到下方並與底部邊界有一些距離
+			
+		svg.append("g")
+			.attr("class","y axis")
+			.attr("transform","translate("+padding+",0)")
+			.call(yAxis);
+			
+			
+		d3.select("p")
+		.on("click",function(){
+			prepareData();
+			
+			svg
+			.selectAll("circle")
+			.data(dataset)
+			.transition()
+			.duration(1000)
+			.each("start",function(){  //在轉場效果開始時，指定作一些事。如果只有一個參數（也就是沒有"start"）這個參數是個匿名函式，則可以在匿名函式中對每一個元素進行一些處理
+				d3.select(this)  //this表示目前的元素
+					.attr("fill","magenta")
+					.attr("r",3); 
+			})
+			.attr({
+				cx: function(d){return xScale(d[0]); },
+				cy: function(d){return yScale(d[1]); },
+				r: function(d){
+					return rScale(d[1]);  //書上說：使用面積大小來對應呈現資料量的大小要比使用半徑來得正確與合理，所以必須先從面積反推出半徑。h-d[1]即為面積資料
+				}
+			})
+			.each("end",function(){ //在轉場效果結束時，指定作一些事
+				d3.select(this)
+					.attr("fill","black")
+					//.attr("r",2);
+			})
+			.transition()  //這是第二個轉場效果，轉場效果可以串接，不會同時發生，第一個轉場若未執行完就呼叫第二個轉場效果，則第一個會被終止並進行第二個
+			.duration(1000)
+			.attr("fill","red");
+			
+			
+			svg.select(".x.axis")
+				.transition()
+				.duration(1000)
+				.call(xAxis);
+			
+			svg.select(".y.axis")
+				.transition()
+				.duration(1000)
+				.call(yAxis);
+		
+		})
+	</script>
+</body>
+</html>

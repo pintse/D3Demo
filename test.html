@@ -1,0 +1,115 @@
+<html>
+<head></head>
+<body>
+
+<script type="text/javascript">
+
+function hello(){
+	return "hello, "+ this.username;
+}
+
+var obj1 = {
+		hello: hello,
+		username: "Gordon Gekko"
+};
+obj1.hello();
+
+var obj2 = {
+	hello: hello,
+	username: "Biff Tannen"
+};
+obj2.hello();
+
+hello();
+
+function User(name, passwordHash){
+	this.name = name;
+	this.passwordHash = passwordHash;
+}
+
+var u = new User("sfalken","0ef33aekjwpjgpo2jwgw4ngpwn");  //第二個參數我亂打
+u.name;
+
+function compareNumber(x,y){
+	if(x < y){
+		return -1;
+	}
+	if (x > y){
+		return 1;
+	}
+	return 0;
+}
+[3,1,4,1,5,9].sort(compareNumber);
+
+[3,1,4,1,5,9].sort(function(x,y){
+	if(x < y){
+		return -1;
+	}
+	if (x > y){
+		return 1;
+	}
+	return 0;
+});
+
+
+var names = ["Fred","Wilma","Pebbles"];
+var upper = names.map(function(name){
+	return name.toUpperCase();
+});
+//////////
+
+var aIndex = "a".charCodeAt(0); //97
+
+function buildString(n, callback){
+	var result = "";
+	for ( var i = 0 ; i< n ; i++ ){
+		result += callback(i);
+	}
+	return result;
+}
+
+var alphabet = buildString(26, function(i){
+	return String.fromCharCode(aIndex + i);
+});
+alphabet;
+
+var digits = buildString(10,function(i){ return i;});
+digits;
+
+var random = buildString(8,function(i){
+	return String.fromCharCode(Math.floor(Math.random()*26)+aIndex);
+});
+random;
+
+var hasOwnProperty = {}.hasOwnProperty;
+var dict = {
+		hello: hello,
+		username: "Gordon Gekko"
+};
+dict.foo = 1;
+delete dict.hasOwnProperty;
+hasOwnProperty.call(dict, "foo");
+hasOwnProperty.call(dict, "hasOwnProperty");
+
+var table = {
+		entries: [],
+		addEntry: function(key, value){
+			this.entries.push({key: key, value: value});
+		},
+		forEach: function(f, thisArg){
+			var entries = this.entries;
+			for(var i=0, n=entries.length; i<n; i++){
+				var entry = entries[i];
+				f.call(thisArg, entry.key, entry.value, i);
+			}
+		}
+};
+
+</script>
+
+<!-- 
+<iframe style="vertical-align: middle;" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d231263.10133849297!2d121.5615012!3d25.085406199999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1szh-TW!2stw!4v1393895314330&amp;scrollwheel=false" width="100%" height="424" frameborder="0">
+					</iframe>
+ -->
+</body>
+</html>
